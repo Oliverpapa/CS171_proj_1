@@ -20,8 +20,22 @@ class StudentAI():
         else:
             self.color = 1
         moves = self.board.get_all_possible_moves(self.color)
-        index = randint(0,len(moves)-1)
-        inner_index =  randint(0,len(moves[index])-1)
-        move = moves[index][inner_index]
+
+        move = select_move(moves)
+        #index = randint(0,len(moves)-1)
+        #inner_index =  randint(0,len(moves[index])-1)
+        #move = moves[index][inner_index]
+
         self.board.make_move(move,self.color)
         return move
+
+    def select_move(moves):
+        """take a list of moves and select the best one,
+        return move"""
+        return moves[0]
+
+    def heuristic_func(self, move):
+        """take a move, evaluate it's heuristic value
+        return the value"""
+        return 0
+
