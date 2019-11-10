@@ -5,7 +5,14 @@
       <paths name="haolinl4@openlab.ics.uci.edu:22">
         <serverdata>
           <mappings>
-            <mapping deploy="/tmp/pycharm_project_873" local="$PROJECT_DIR$" />
+            <mapping deploy="/home/haolinl4/ics171/CS171_proj_1" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="zifanc@openlab.ics.uci.edu:22">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/zifanc/cs171_proj/CS171_proj_1" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>
