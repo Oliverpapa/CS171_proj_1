@@ -28,45 +28,92 @@ def flatMoves(m):
     return result
 
 
-def abPruning(copySelf, depth):
-    pass
-
-
-def simple_search(copySelf):
-    moves1 = flatMoves(copySelf.board.get_all_possible_moves(copySelf.color))
-    Max1 = -math.inf
-    Min1 = math.inf
-    move = moves1[0]
-    for move1 in moves1:
-        copySelf.board.make_move(move1, copySelf.color)
-        if copySelf.board.is_win(colorDictInv[copySelf.color]) == copySelf.color:
-            return move1
-        moves2 = flatMoves(copySelf.board.get_all_possible_moves(3 - copySelf.color))
-        for move2 in moves2:
-            Max2 = copy.copy(Max1)
-            Min2 = copy.copy(Min1)
-            copySelf.board.make_move(move2, 3 - copySelf.color)
-            if copySelf.board.is_win(colorDictInv[3 - copySelf.color]) == 3 - copySelf.color:
-                Min2 = -math.inf
-            moves3 = flatMoves(copySelf.board.get_all_possible_moves(copySelf.color))
-            for move3 in moves3:
-                Max3 = copy.copy(Max2)
-                Min3 = copy.copy(Min2)
-                score = copySelf.heuristic_func(move3, copySelf.color)
-                if score > Max3:
-                    Max3 = score
-                if Max3 >= Min3:
-                    break
+def abPruning(copySelf, depth, Max, Min, player):
+    moves = flatMoves(copySelf.board.get_all_possible_moves(player))
+    if depth == 0:
+        result = moves[0]
+        for move in moves:
+            copySelf.board.make_move(move, copySelf.color)
+            max, min = abPruning(copySelf, depth + 1, Max, Min, 3-copySelf.color)
             copySelf.board.undo()
-            if Max3 < Min2:
-                Min2 = Max3
-            if Max2 >= Min2:
-                break
-        copySelf.board.undo()
-        if Min2 > Max1:
-            Max1 = Min2
-            move = move1
-    return move
+            if min > Max:
+                Max = min
+                result = move
+        return result
+    elif depth == copySelf.depth:
+        if player == copySelf.color:
+            for move in moves:
+                score = copySelf.heuristic_func(move, copySelf.color)
+                if score > Max:
+                    Max = score
+                if Max >= Min:
+                    break
+            return Max,Min
+        else:
+            for move in moves:
+                score = copySelf.heuristic_func(move, 3-copySelf.color)
+                if score < Min:
+                    Min = score
+                if Max >= Min:
+                    break
+            return Max,Min
+    else:
+        for move in moves:
+            if player == copySelf.board.is_win(colorDictInv[copySelf.color]) == copySelf.color:
+                return math.inf, Min
+            elif player == copySelf.board.is_win(colorDictInv[3 - copySelf.color]) == 3 - copySelf.color:
+                return Max, -math.inf
+            copySelf.board.make_move(move, player)
+            max, min = abPruning(copySelf, depth + 1, Max, Min, 3-player)
+            copySelf.board.undo()
+            if player == copySelf.color:
+                if min > Max:
+                    Max = min
+                if Max >= Min:
+                    break
+            else:
+                if max < Min:
+                    Min = max
+                if Max >= Min:
+                    break
+        return Max, Min
+
+
+# def simple_search(copySelf):
+#     moves1 = flatMoves(copySelf.board.get_all_possible_moves(copySelf.color))
+#     Max1 = -math.inf
+#     Min1 = math.inf
+#     move = moves1[0]
+#     for move1 in moves1:
+#         copySelf.board.make_move(move1, copySelf.color)
+#         if copySelf.board.is_win(colorDictInv[copySelf.color]) == copySelf.color:
+#             return move1
+#         moves2 = flatMoves(copySelf.board.get_all_possible_moves(3 - copySelf.color))
+#         for move2 in moves2:
+#             Max2 = copy.copy(Max1)
+#             Min2 = copy.copy(Min1)
+#             copySelf.board.make_move(move2, 3 - copySelf.color)
+#             if copySelf.board.is_win(colorDictInv[3 - copySelf.color]) == 3 - copySelf.color:
+#                 Min2 = -math.inf
+#             moves3 = flatMoves(copySelf.board.get_all_possible_moves(copySelf.color))
+#             for move3 in moves3:
+#                 Max3 = copy.copy(Max2)
+#                 Min3 = copy.copy(Min2)
+#                 score = copySelf.heuristic_func(move3, copySelf.color)
+#                 if score > Max3:
+#                     Max3 = score
+#                 if Max3 >= Min3:
+#                     break
+#             copySelf.board.undo()
+#             if Max3 < Min2:
+#                 Min2 = Max3
+#             if Max2 >= Min2:
+#                 break
+#         copySelf.board.undo()
+#         if Min2 > Max1:
+#             Max1 = Min2
+#             move = move1
+#     return move
 
 
 class StudentAI():
@@ -80,9 +127,9 @@ class StudentAI():
         self.color = ''
         self.opponent = {1: 2, 2: 1}
         self.color = 2
-        self.depth = 2
-        self.a = 0
-        self.b = 0
+        self.depth = 4
+        self.a = -math.inf
+        self.b = math.inf
 
     def get_move(self, move):
         if len(move) != 0:
@@ -95,6 +142,7 @@ class StudentAI():
         # inner_index = randint(0, len(moves[index]) - 1)
         # move = moves[index][inner_index]
         move = self.select_move(moves)
+        # print(move)
         self.board.make_move(move, self.color)
         return move
 
@@ -102,10 +150,9 @@ class StudentAI():
         """take a list of moves and select the best one,
         return move"""
         copySelf = copy.deepcopy(self)
-        self.a = -math.inf
-        self.b = math.inf
 
-        return simple_search(copySelf)
+        return abPruning(copySelf, 0, self.a, self.b, self.color)
+        # return simple_search(copySelf)
 
     def heuristic_func(self, move, color):
         """take a move, evaluate it's heuristic value
@@ -123,10 +170,17 @@ class StudentAI():
                 if colorDict[checker.get_color()] == self.color:
                     y = checker.get_location()[1]
                     if self.color == 1:
-                        result += y + 5
+                        if checker.is_king:
+                            result += self.board.row + 1
+                        else:
+                            result += y + 5
                     else:
-                        result += 4 + self.board.row - y
-                elif checker.is_king:
-                    result += 2
+                        if checker.is_king:
+                            result += self.board.row + 1
+                        else:
+                            result += 4 + self.board.row - y
+                else:
+                    result -= 2
+
         self.board.undo()
         return result
