@@ -6,7 +6,7 @@ import copy
 
 # The following part should be completed by students.
 # Students can modify anything except the class name and exisiting functions and varibles.
-
+# Group name: ArtificialStupidity2
 colorDict = {
     "B": 1,
     "W": 2,
@@ -28,13 +28,21 @@ def flatMoves(m):
     return result
 
 
+def getProtected(coord, other):
+    possible_coord = [[-1, -1], [-1, 1], [1, -1], [1, 1]]
+    for o in other:
+        if [coord[0] - o[0], coord[1] - o[1]] in possible_coord:
+            return True
+    return False
+
+
 def abPruning(copySelf, depth, Max, Min, player):
     moves = flatMoves(copySelf.board.get_all_possible_moves(player))
     if depth == 0:
         result = moves[0]
         for move in moves:
             copySelf.board.make_move(move, copySelf.color)
-            max, min = abPruning(copySelf, depth + 1, Max, Min, 3-copySelf.color)
+            max, min = abPruning(copySelf, depth + 1, Max, Min, 3 - copySelf.color)
             copySelf.board.undo()
             if min > Max:
                 Max = min
@@ -48,15 +56,15 @@ def abPruning(copySelf, depth, Max, Min, player):
                     Max = score
                 if Max >= Min:
                     break
-            return Max,Min
+            return Max, Min
         else:
             for move in moves:
-                score = copySelf.heuristic_func(move, 3-copySelf.color)
+                score = copySelf.heuristic_func(move, 3 - copySelf.color)
                 if score < Min:
                     Min = score
                 if Max >= Min:
                     break
-            return Max,Min
+            return Max, Min
     else:
         for move in moves:
             if player == copySelf.board.is_win(colorDictInv[copySelf.color]) == copySelf.color:
@@ -64,7 +72,7 @@ def abPruning(copySelf, depth, Max, Min, player):
             elif player == copySelf.board.is_win(colorDictInv[3 - copySelf.color]) == 3 - copySelf.color:
                 return Max, -math.inf
             copySelf.board.make_move(move, player)
-            max, min = abPruning(copySelf, depth + 1, Max, Min, 3-player)
+            max, min = abPruning(copySelf, depth + 1, Max, Min, 3 - player)
             copySelf.board.undo()
             if player == copySelf.color:
                 if min > Max:
@@ -165,22 +173,54 @@ class StudentAI():
         }
         self.board.make_move(move, color)
         # print (self.board.board)
+        black = []
+        white = []
         for row in self.board.board:
             for checker in row:
-                if colorDict[checker.get_color()] == self.color:
-                    y = checker.get_location()[1]
-                    if self.color == 1:
-                        if checker.is_king:
-                            result += self.board.row + 1
-                        else:
-                            result += y + 5
-                    else:
-                        if checker.is_king:
-                            result += self.board.row + 1
-                        else:
-                            result += 4 + self.board.row - y
+                if colorDict[checker.get_color()] == 1:
+                    black.append(checker.get_location())
                 else:
-                    result -= 2
+                    white.append(checker.get_location())
+        # for row in self.board.board:
+        #     for checker in row:
+        #         add = 1 if colorDict[checker.get_color()] == self.color else -1
+        #         y = checker.get_location()[1]
+        #         if self.color == 1:
+        #             # if getProtected(checker.get_location(), black) and add == 1:
+        #             #     result += 5
+        #             if checker.is_king:
+        #                 result += (self.board.row + 1 + y) * add
+        #             else:
+        #                 result += (y + 5) * add
+        #         else:
+        #             # if getProtected(checker.get_location(), white) and add == 1:
+        #             #     result += 5
+        #             if checker.is_king:
+        #                 result += (self.board.row + 1) * add
+        #             else:
+        #                 result += (4 + self.board.row - y) * add
+        for row in self.board.board:
+            for checker in row:
+                y = checker.get_location()[1]
+                x = checker.get_location()[0]
+                if colorDict[checker.get_color()] == self.color:
+                    if self.color == 2 and y == self.board.row - 1:
+                        result += 0.5
+                    elif self.color == 1 and y == 0:
+                        result += 0.5
+                    if x == 0 or x == self.board.col - 1:
+                        result += 0.25
+                    if checker.is_king:
+                        result += 3.0 + 0.5*abs(y-(self.board.row/2.0))
+                    else:
+                        result += 1.5
+                else:
+                    if checker.is_king:
+                        result -= 3.0
+                    else:
+                        result -= 1.5
 
         self.board.undo()
         return result
+
+
